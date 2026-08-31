@@ -1,0 +1,10 @@
+.git
+.github
+.env*
+config
+data
+*.pem
+*.key
+*.crt
+proxy-import*.json
+

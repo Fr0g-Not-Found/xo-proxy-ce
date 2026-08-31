@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+config/
+data/
+*.pem
+*.key
+*.crt
+*token*
+proxy-import*.json
+internal/
