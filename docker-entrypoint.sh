@@ -59,5 +59,9 @@ watchEvents = ['network', 'PIF', 'pool', 'SR', 'task', 'VBD', 'VDI', 'VIF', 'VM'
 EOF
 chmod 600 "$config" "$token_file"
 
-exec "$@"
+/usr/bin/node /usr/local/lib/xo-proxy-ce/write-registration.mjs
+if [ -n "${XO_PROXY_ADDRESS:-}" ]; then
+  printf '%s\n' "XOCE registration file: /etc/xo-proxy/registration.json"
+fi
 
+exec "$@"

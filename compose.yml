@@ -5,12 +5,14 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "443:443"
+      - "192.0.2.10:443:443"
     volumes:
       - ./config:/etc/xo-proxy
       - ./data:/var/lib/xo-proxy
     environment:
       XO_PROXY_PORT: "443"
+      XO_PROXY_NAME: "CHANGE-ME"
+      XO_PROXY_ADDRESS: "192.0.2.10:443"
     cap_add:
       - SYS_ADMIN
     devices:

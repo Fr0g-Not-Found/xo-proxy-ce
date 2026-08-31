@@ -1,45 +1,65 @@
 # XO Proxy CE container
 
-This project packages the upstream Xen Orchestra proxy process from [Ezka77's Xen Orchestra CE image](https://github.com/Ezka77/xen-orchestra-ce) as a standalone container.
+Runs the Xen Orchestra backup proxy from source in a Docker container. It follows the Community Edition proxy approach used by [XenOrchestraInstallerUpdater](https://github.com/ronivay/XenOrchestraInstallerUpdater): build the public proxy source, disable its XOA appliance-license lookup, and import the generated proxy record into XOCE.
 
-The container:
+The image is rebuilt weekly and published as:
 
-- starts `@xen-orchestra/proxy` instead of `xo-server`;
-- generates a persistent authentication token on first start;
-- generates `/etc/xo-proxy/config.toml` from the container environment;
-- stores its token, certificate, and data outside the image; and
-- is rebuilt weekly and published as `ghcr.io/fr0g-not-found/xo-proxy-ce:latest`.
+```text
+ghcr.io/fr0g-not-found/xo-proxy-ce:latest
+```
 
-## Run it
+## Configure
+
+Edit these values in `compose.yml`:
+
+```yaml
+environment:
+  XO_PROXY_PORT: "443"
+  XO_PROXY_NAME: "My Proxy"
+  XO_PROXY_ADDRESS: "proxy.example.test:443"
+```
+
+`XO_PROXY_ADDRESS` must be a `host:port` address the XOCE server can reach. Do not include `http://`, `https://`, or a path. If the host port mapping is changed, use that published port.
+
+Add any host storage required by backup jobs as bind mounts under `volumes`.
+
+## Start
 
 ```sh
 docker compose up -d
 docker logs xo-proxy
 ```
 
-Read the generated token:
+The first start creates persistent configuration, a self-signed certificate, an authentication token, and an XOCE registration file in the mounted `./config` directory.
+
+## Import into XOCE
+
+Copy `config/registration.json` from the Docker host. In XOCE, open **Settings > Config**, choose the configuration import option, and import that JSON file.
+
+This partial import adds the proxy record. It does not replace the rest of the XOCE configuration. Export a current XOCE configuration backup before importing it.
+
+The generated files can also be inspected from the container:
 
 ```sh
-docker exec xo-proxy cat /etc/xo-proxy/authentication-token
-```
-
-The generated configuration is available at:
-
-```sh
+docker exec xo-proxy cat /etc/xo-proxy/registration.json
 docker exec xo-proxy cat /etc/xo-proxy/config.toml
 ```
 
-Register the proxy in Xen Orchestra with its reachable HTTPS address and generated authentication token. Xen Orchestra assigns the proxy ID during registration; there is no configuration file to import and no UUID to invent.
+`registration.json` contains the proxy authentication token. Treat it as a password and never commit it.
 
-## Current limitation
+## Update
 
-This image starts and registers the open-source proxy process, but it is not currently a functional replacement for the official XO Proxy appliance. Upstream backup execution requires a valid proxy license supplied through the appliance updater service. That updater is not part of this image, so a backup job will fail rather than bypass the check.
+Pull and recreate the container. The mounted `./config` and `./data` directories preserve its identity, token, certificate, and state.
 
-The relevant upstream implementation is in [`backups.mjs`](https://github.com/vatesfr/xen-orchestra/blob/master/%40xen-orchestra/proxy/app/mixins/backups.mjs) and [`appliance.mjs`](https://github.com/vatesfr/xen-orchestra/blob/master/%40xen-orchestra/proxy/app/mixins/appliance.mjs).
+```sh
+docker compose pull
+docker compose up -d
+```
+
+The build intentionally fails if upstream changes the patched license function, forcing the patch to be reviewed before a new image is published.
 
 ## License
 
-Xen Orchestra's proxy source is AGPL-3.0-or-later. See [upstream licensing](https://docs.xen-orchestra.com/licenses). The original wrapper files in this repository use the included MIT license.
+The Xen Orchestra proxy and the modification applied to it are distributed under AGPL-3.0-or-later. See the [upstream license information](https://docs.xen-orchestra.com/licenses). The remaining original container wrapper files use the included MIT license.
 
-This independent project is not supported by Vates or the Ezka77 project.
-
+This is an independent community build and is not supported by Vates or the Ezka77 project.

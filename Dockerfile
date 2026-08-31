@@ -6,6 +6,10 @@ LABEL org.opencontainers.image.description="Container wrapper for the upstream X
 LABEL org.opencontainers.image.source="https://github.com/Fr0g-Not-Found/xo-proxy-ce"
 
 COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/xo-proxy-entrypoint
+COPY apply-xoce-proxy-patch.mjs write-registration.mjs /usr/local/lib/xo-proxy-ce/
+
+RUN /usr/bin/node /usr/local/lib/xo-proxy-ce/apply-xoce-proxy-patch.mjs \
+    && rm /usr/local/lib/xo-proxy-ce/apply-xoce-proxy-patch.mjs
 
 RUN mkdir -p /etc/xo-proxy /var/lib/xo-proxy/data /run/xo-proxy/mounts
 
@@ -22,4 +26,3 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 ENTRYPOINT ["/usr/local/bin/xo-proxy-entrypoint"]
 CMD ["/usr/bin/node", "/home/node/xen-orchestra/@xen-orchestra/proxy/index.mjs"]
-
