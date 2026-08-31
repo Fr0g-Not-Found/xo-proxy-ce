@@ -21,7 +21,21 @@ environment:
 
 `XO_PROXY_ADDRESS` must be a `host:port` address the XOCE server can reach. Do not include `http://`, `https://`, or a path. If the host port mapping is changed, use that published port.
 
-Add any host storage required by backup jobs as bind mounts under `volumes`.
+Set three host paths under `volumes`: two persistent proxy directories and the
+backup repository that the proxy should access directly. Replace `POOL` with
+the storage-pool name on the Docker host.
+
+```yaml
+volumes:
+  - /mnt/POOL/docker/xo-proxy/config:/etc/xo-proxy
+  - /mnt/POOL/docker/xo-proxy/data:/var/lib/xo-proxy
+  - /mnt/POOL/xo-backups:/backups
+```
+
+The first two mounts preserve the proxy identity, token, certificate, and
+state. The third exposes the host's backup dataset inside the proxy as
+`/backups`. Xen Orchestra remote paths must use the container path, such as
+`/backups/xo`, rather than the host path beginning with `/mnt/POOL`.
 
 ## Start
 
@@ -30,11 +44,11 @@ docker compose up -d
 docker logs xo-proxy
 ```
 
-The first start creates persistent configuration, a self-signed certificate, an authentication token, and an XOCE registration file in the mounted `./config` directory.
+The first start creates persistent configuration, a self-signed certificate, an authentication token, and an XOCE registration file in the mounted configuration directory.
 
 ## Import into XOCE
 
-Copy `config/registration.json` from the Docker host. In XOCE, open **Settings > Config**, choose the configuration import option, and import that JSON file.
+Copy `registration.json` from the host configuration directory. In XOCE, open **Settings > Config**, choose the configuration import option, and import that JSON file.
 
 This partial import adds the proxy record. It does not replace the rest of the XOCE configuration. Export a current XOCE configuration backup before importing it.
 
@@ -49,7 +63,7 @@ docker exec xo-proxy cat /etc/xo-proxy/config.toml
 
 ## Update
 
-Pull and recreate the container. The mounted `./config` and `./data` directories preserve its identity, token, certificate, and state.
+Pull and recreate the container. The mounted configuration and data directories preserve its identity, token, certificate, and state.
 
 ```sh
 docker compose pull

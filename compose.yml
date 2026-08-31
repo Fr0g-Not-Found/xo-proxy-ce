@@ -7,8 +7,9 @@ services:
     ports:
       - "192.0.2.10:443:443"
     volumes:
-      - ./config:/etc/xo-proxy
-      - ./data:/var/lib/xo-proxy
+      - /mnt/POOL/docker/xo-proxy/config:/etc/xo-proxy
+      - /mnt/POOL/docker/xo-proxy/data:/var/lib/xo-proxy
+      - /mnt/POOL/xo-backups:/backups
     environment:
       XO_PROXY_PORT: "443"
       XO_PROXY_NAME: "CHANGE-ME"
