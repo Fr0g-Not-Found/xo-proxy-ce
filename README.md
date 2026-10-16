@@ -1,6 +1,6 @@
 # XO Proxy CE container
 
-Runs the Xen Orchestra backup proxy from source in a Docker container. It follows the Community Edition proxy approach used by [XenOrchestraInstallerUpdater](https://github.com/ronivay/XenOrchestraInstallerUpdater): build the public proxy source, disable its XOA appliance-license lookup, and import the generated proxy record into XOCE.
+Runs the Xen Orchestra backup proxy from source in a Docker container. It follows the Community Edition proxy approach used by [XenOrchestraInstallerUpdater](https://github.com/ronivay/XenOrchestraInstallerUpdater): build the public proxy source, override its XOA appliance-license lookup when present, and import the generated proxy record into XOCE.
 
 The image is rebuilt weekly and published as:
 
@@ -70,7 +70,19 @@ docker compose pull
 docker compose up -d
 ```
 
-The build intentionally fails if upstream changes the patched license function, forcing the patch to be reviewed before a new image is published.
+Every build pulls the latest upstream base image. On older upstream versions, a
+small module wrapper overrides only `getSelfLicense()`; the original module and
+all other behavior remain intact. Changes inside that method do not require an
+update to this wrapper.
+
+Newer upstream versions have removed the proxy-side license check. When both the
+method and its references are absent, the build leaves upstream untouched. It
+fails if the appliance export changes shape, the hook stops being a method, or
+references remain after the method disappears. These checks catch known interface
+incompatibilities; they cannot guarantee compatibility with every future upstream
+behavior change.
+
+Run the compatibility tests with `node --test test/*.test.mjs`.
 
 ## License
 

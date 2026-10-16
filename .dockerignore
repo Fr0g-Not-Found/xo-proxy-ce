@@ -8,3 +8,4 @@ data
 *.crt
 proxy-import*.json
 
+test
